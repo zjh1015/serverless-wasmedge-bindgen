@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wasmedge的Serverless应用</title>
+    <link rel="icon" href="./favicon.ico">
+    <link rel="stylesheet" href="./style.css">
+    <script type='text/javascript' src='./page.js'></script>
+   
+</head>
+
+<body >
+    <div class="container" >
+        <div class="main">
+            <div class="row">
+                <img src="./gzumt.png"
+                alt="贵州大学">
+                <img src="./baishan.png"
+                alt="白山云" style="margin-left: 100px;">
+            </div>
+            <h1 class="title" style="margin-top: 100px;">
+                AI推理Serverless应用 
+            </h1>
+
+            <div class="operating" style="max-width:90%">
+                <div class="row">
+                    <input type="file" id="fileElem" class="visually-hidden" accept="image/*" onchange="fileSelected(this)" />
+                    <label for="fileElem" class="noselect"  style="font-size:30px;">选择图片文件</label>
+
+                    <button id="run" style="margin-left:10px;font-size:25px" onclick="runWasm()" disabled>这是什么花?</button>
+                    
+                    <label for="run-api" style="margin-left:10px">API:</label>
+                    <select id="run-api" onchange="setButton()" style="margin-left:10px">
+                        <option value="go">Go</option>
+                        <option value="rust">Rust</option>
+                    </select>
+                </div>
+                <div id="infer-rows" style="margin-top: 30px">
+                    <div class='infer' id='result' hidden="true"></div>
+                    <img id="upload-pic" hidden="true" src="#" alt="uploaded" style="max-width:500px; max-height:500px;" />
+                </div>
+            </div>
+        </div>
+        <canvas id="canvas" width="0px" height="0px"></canvas>
+        <footer class="footer">
+            <a>Powered by GZU & BaiShan</a>
+        </footer>
+    </div>
+     
+
+    <script>
+
+        // 可调参数
+        var BACKGROUND_COLOR = "rgba(175,238,238,1)";   // 背景颜色
+        var POINT_NUM = 180;                        // 星星数目
+        var POINT_COLOR = "rgba(255,255,255,1)";  // 点的颜色
+        var LINE_LENGTH = 10000;                    // 点之间连线长度(的平方)
+        
+        // 创建背景画布
+        var cvs = document.createElement("canvas");
+        cvs.width = window.innerWidth;
+        cvs.height = window.innerHeight;
+        cvs.style.cssText = "\
+            position:fixed;\
+            top:0px;\
+            left:0px;\
+            z-index:-1;\
+            opacity:1.0;\
+            ";
+        document.body.appendChild(cvs);
+        
+        var ctx = cvs.getContext("2d");
+        
+        var startTime = new Date().getTime();
+        
+        //随机数函数
+        function randomInt(min, max) {
+            return Math.floor((max - min + 1) * Math.random() + min);
+        }
+        
+        function randomFloat(min, max) {
+            return (max - min) * Math.random() + min;
+        }
+        
+        //构造点类
+        function Point() {
+            this.x = randomFloat(0, cvs.width);
+            this.y = randomFloat(0, cvs.height);
+        
+            var speed = randomFloat(1.3, 1.4);
+            var angle = randomFloat(0, 2 * Math.PI);
+        
+            this.dx = Math.sin(angle) * speed;
+            this.dy = Math.cos(angle) * speed;
+        
+            this.r = 2.5;
+        
+            this.color = POINT_COLOR;
+        }
+        
+        Point.prototype.move = function () {
+            this.x += this.dx;
+            if (this.x < 0) {
+                this.x = 0;
+                this.dx = -this.dx;
+            } else if (this.x > cvs.width) {
+                this.x = cvs.width;
+                this.dx = -this.dx;
+            }
+            this.y += this.dy;
+            if (this.y < 0) {
+                this.y = 0;
+                this.dy = -this.dy;
+            } else if (this.y > cvs.height) {
+                this.y = cvs.height;
+                this.dy = -this.dy;
+            }
+        }
+        
+        Point.prototype.draw = function () {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        var points = [];
+        
+        function initPoints(num) {
+            for (var i = 0; i < num; ++i) {
+                points.push(new Point());
+            }
+        }
+        
+        var p0 = new Point(); //鼠标
+        p0.dx = p0.dy = 0;
+        var degree = 2.5;
+        document.onmousemove = function (ev) {
+            p0.x = ev.clientX;
+            p0.y = ev.clientY;
+        }
+        document.onmousedown = function (ev) {
+            degree = 5.0;
+            p0.x = ev.clientX;
+            p0.y = ev.clientY;
+        }
+        document.onmouseup = function (ev) {
+            degree = 2.5;
+            p0.x = ev.clientX;
+            p0.y = ev.clientY;
+        }
+        window.onmouseout = function () {
+            p0.x = null;
+            p0.y = null;
+        }
+        
+        function drawLine(p1, p2, deg) {
+            var dx = p1.x - p2.x;
+            var dy = p1.y - p2.y;
+            var dis2 = dx * dx + dy * dy;
+            if (dis2 < 2 * LINE_LENGTH) {
+                if (dis2 > LINE_LENGTH) {
+                    if (p1 === p0) {
+                        p2.x += dx * 0.5;
+                        p2.y += dy * 0.5;
+                    } else return;
+                }
+                var t = (1.05 - dis2 / LINE_LENGTH) * 0.2 * deg;
+                ctx.strokeStyle = "rgba(255,255,255," + t + ")";
+                ctx.beginPath();
+                ctx.lineWidth = 3;
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.closePath();
+                ctx.stroke();
+            }
+            return;
+        }
+        
+        //绘制每一帧
+        function drawFrame() {
+            cvs.width = window.innerWidth;
+            cvs.height = window.innerHeight;
+            var my_gradient=ctx.createLinearGradient(0,0,0,cvs.height);
+            my_gradient.addColorStop(0,"paleturquoise");
+            my_gradient.addColorStop(1,"white");
+            ctx.fillStyle = my_gradient;
+            ctx.fillRect(0, 0, cvs.width, cvs.height);
+        
+            var arr = (p0.x == null ? points : [p0].concat(points));
+            for (var i = 0; i < arr.length; ++i) {
+                for (var j = i + 1; j < arr.length; ++j) {
+                    drawLine(arr[i], arr[j], 1.0);
+                }
+                arr[i].draw();
+                arr[i].move();
+            }
+        
+            window.requestAnimationFrame(drawFrame);
+        }
+        
+        initPoints(POINT_NUM);
+        drawFrame();
+        </script>
+</body>
+
+ 
+
+</html>
