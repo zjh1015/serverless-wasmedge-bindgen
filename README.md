@@ -137,3 +137,4 @@ dapr list
 
 ![](./doc/demo.png)
 
+# dapr-wasm-wasmedge-bindgen
