@@ -38,8 +38,38 @@ This Dapr service is written in Rust. It simply starts a new process for the Was
 
 * [Install Golang](https://golang.org/doc/install)
 **Note** Package managers like apt will only install older versions of go i.e. go `1.13.8`, so please use link above to install go version `1.17.1` or higher.
+```bash
+wget -c https://dl.google.com/go/go1.19.2.linux-amd64.tar.gz
+sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.19.2.linux-amd64.tar.gz
+##在$HOME/.profile中设置如下命令：
+export PATH=$PATH:/usr/local/go/bin
+##
+source $HOME/.profile
+go version
+## 打印出go版本号即安装成功
+```
 * [install Rust](https://www.rust-lang.org/en-US/install.html)
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+## 根据屏幕的指示来完成安装
+rustc --version
+## 打印出rustc版本号即安装成功
+cargo --version
+## 打印出cargo版本号即安装成功
+```
+* [Install Docker](https://docs.docker.com/desktop/install/ubuntu/)
+```bash
+curl -fsSL https://get.docker.com | bash -s docker
+docker -v
+sudo usermod -aG docker [username]
+```
+
 * [Install Dapr](https://docs.dapr.io/getting-started/)
+```bash
+wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | /bin/bash
+dapr -v
+dapr init
+```
 * [Install WasmEdge](https://github.com/WasmEdge/WasmEdge/blob/master/docs/install.md)
 
 
