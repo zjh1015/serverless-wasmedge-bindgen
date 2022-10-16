@@ -69,10 +69,16 @@ sudo usermod -aG docker [username]
 wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | /bin/bash
 dapr -v
 dapr init
+dapr -v
 ```
 * [Install WasmEdge](https://github.com/WasmEdge/WasmEdge/blob/master/docs/install.md)
-
-
+```bash
+curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- -e all -v 0.9.0
+```
+* [Install RustWasmc](https://github.com/second-state/rustwasmc)
+```bash
+curl https://raw.githubusercontent.com/second-state/rustwasmc/master/installer/init.sh -sSf | sh
+```
 ## 4. Build
 
 ```bash
