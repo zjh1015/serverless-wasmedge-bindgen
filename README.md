@@ -126,9 +126,9 @@ dapr list
   image-api-go               3501       34291      9003      ./image-api-go        9m   2021-10-23 12:25.27  285852
 ```
 
-## 6. Online Demo: Dapr-WasmEdge
+## 6. 在线Demo
 
-[Access the demo here](http://114.132.210.248/)
+[demo](http://114.132.210.248/)
 
 ![doc](./doc/demo.png)
 
