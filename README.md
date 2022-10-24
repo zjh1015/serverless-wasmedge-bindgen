@@ -30,7 +30,7 @@
 ## 3. 环境准备
 
 * [Install Golang](https://golang.org/doc/install)
-**Note** Package managers like apt will only install older versions of go i.e. go `1.13.8`, so please use link above to install go version `1.17.1` or higher.
+**注意** go >=1.17.1
 ```bash
 wget -c https://dl.google.com/go/go1.19.2.linux-amd64.tar.gz
 sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.19.2.linux-amd64.tar.gz
@@ -112,7 +112,7 @@ dapr run --app-id image-api-go \
          ./image-api-go
 ```
 
-After all the services started, we can use this command to verify:
+在所有服务启动后，用该命令进行验证:
 
 ```bash
 dapr list
@@ -130,5 +130,5 @@ dapr list
 
 [Access the demo here](http://114.132.210.248/)
 
-![](./doc/demo.png)
+![doc](./doc/demo.png)
 
