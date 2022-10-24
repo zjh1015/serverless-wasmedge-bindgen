@@ -1,40 +1,33 @@
-## Demo and tutorials
+## 演示和指南
 
-[Live Demo](http://23.100.38.125/static/home.html) | [Tutorial article](https://www.infoq.com/articles/webassembly-dapr-wasmedge/) | [Tutorial video](https://youtu.be/t_sQP6Qpf7U)
 
-## 1. Introduction
+## 1. 介绍
 
-[DAPR](https://dapr.io/) is a portable, event-driven runtime that makes it easy for any developer to build resilient, stateless and stateful applications that run on the cloud and edge and embraces the diversity of languages and developer frameworks. It's a Microsoft-incubated [open-source](https://github.com/dapr/dapr) project.
+[DAPR](https://dapr.io/) 是一个可移植的事件驱动型运行时，它使任何开发人员都可以轻松构建在云和边缘上运行的弹性、无状态和有状态应用程序，并包含语言和开发人员框架的多样性。 这是一个由微软孵化的[开源](https://github.com/dapr/dapr)项目。
 
-[WasmEdge](https://github.com/WasmEdge/WasmEdge) is a open-source, high-performance, extensible, and hardware optimized WebAssembly Virtual Machine for automotive, cloud, AI, and blockchain applications.
+[WasmEdge](https://github.com/WasmEdge/WasmEdge) 是一款开源、高性能、可扩展且硬件优化的 WebAssembly 虚拟机，适用于汽车、云、人工智能和区块链应用。
 
-In this demonstration App, we create two image processing web services, integrated with Dapr.
-This project is built to demonstrate how to use Dapr to integrate Web applications in any programming language, and how WasmEdge can be embed in Go and Rust applications.
+在此应用程序中，我们创建了一个有关于Serverless的深度学习模型在Wasmedge中的部署的简单演示，其中主要包括利用go的api接口和wasi-socker来完成在wasmedge中深度学习的应用。
 
-## 2. Architecture
+## 2. 结构
 
-This project contains 4 Dapr sidecar services:
+这个项目主要由4个部分组成:
 
 * The [Web port service](./web-port)
 
-It is a simple Go Web application which is exposed as an endpoint of the whole application.
-It will render a static HTML page for the user to upload an image, and receive the image from the user, redirect request to internal image APIs.
+它是一个简单的 Go Web 应用程序，它公开为整个应用程序的端点。它将呈现一个静态的HTML页面，供用户上传图像，并从用户接收图像，将请求重定向到内部图像API。
 
 * The [image service in WasmEdge](./image-api-wasi-socket-rs)
 
-This Dapr service is written in Rust and compiled to WebAssembly. Running inside WasmEdge Runtime, the WebAssembly bytecode program creates a HTTP service that listens for RPC requests from other Dapr applications, including the [web port](./web-port).
+此 Dapr 服务是用 Rust 编写的，并编译为 Web 组件。在 WasmEdge 运行时中运行的 Web 组件字节码程序创建一个 HTTP 服务，该服务侦听来自其他 Dapr 应用程序（包括 [web port](./web-port)）的 RPC 请求。并对请求的图片调用深度学习模型
 
 * The [image service in Golang](./image-api-go)
-
-This Dapr service is written in Golang. It uses `WASI` to call a prebuild wasm file to classify an image using a Tensorflow model.
-
-* The [image service in Rust](./image-api-rs)
-
-This Dapr service is written in Rust. It simply starts a new process for the WasmEdge VM to run and perform grayscale on a image.
+ 
+这个服务是使用go语言编写的，可以调用Tensorflow的图像分类的wasm文件。
 
 ![doc](./doc/dapr-wasmedge.png)
 
-## 3. Prerequisites
+## 3. 环境准备
 
 * [Install Golang](https://golang.org/doc/install)
 **Note** Package managers like apt will only install older versions of go i.e. go `1.13.8`, so please use link above to install go version `1.17.1` or higher.
@@ -79,29 +72,8 @@ curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/insta
 ```bash
 curl https://raw.githubusercontent.com/second-state/rustwasmc/master/installer/init.sh -sSf | sh
 ```
-## 4. Build
-
-```bash
-make pre-install  ## Install WasmEdge dependences
-make build        ## Will build all the components
-
-## If you modify the wasm functions project,
-## Use the commands in ./functions/grayscale/build.sh 
-## and ./functions/classify/build.sh to generate new compiled files
-make build-wasm
-```
-## 5. Run
-
-To simplify the deployment, we provide a script to run the services:
-
-```bash
-make run-api-wasi-socket-rs ## Run the WasmEdge microservice
-make run-api-go ## Run the image-api-go microservice
-make run-api-rs ## Run the image-api-rs microservice
-make run-web ## Run the Web port service
-```
-
-For each component, you can also run it individually:
+## 4. 运行
+ 
 
 ### Start the web-port service
 
@@ -140,19 +112,6 @@ dapr run --app-id image-api-go \
          ./image-api-go
 ```
 
-### Start the image-api-rust service
-
-```bash
-cd image-api-rs
-dapr run --app-id image-api-rs \
-         --app-protocol http \
-         --app-port 9004 \
-         --dapr-http-port 3502 \
-         --components-path ../config \
-         --log-level debug \
-         ./target/debug/image-api-rs
-```
-
 After all the services started, we can use this command to verify:
 
 ```bash
@@ -169,7 +128,7 @@ dapr list
 
 ## 6. Online Demo: Dapr-WasmEdge
 
-[Access the demo here](http://23.100.38.125/static/home.html)
+[Access the demo here](http://114.132.210.248/)
 
 ![](./doc/demo.png)
 
